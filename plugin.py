@@ -373,6 +373,23 @@ def _make_patched_llm_generate_content(target_key: str):
     return _patched
 
 
+def _resolve_replyer_classes() -> Tuple[Type[Any], Type[Any]]:
+    from src.chat.replyer import group_generator, private_generator
+
+    group_class = getattr(group_generator, "DefaultReplyer", None) or getattr(group_generator, "GroupGenerator", None)
+    private_class = getattr(private_generator, "PrivateReplyer", None) or getattr(private_generator, "PrivateGenerator", None)
+
+    if not group_class or not private_class:
+        group_names = [name for name in ("DefaultReplyer", "GroupGenerator") if hasattr(group_generator, name)]
+        private_names = [name for name in ("PrivateReplyer", "PrivateGenerator") if hasattr(private_generator, name)]
+        raise RuntimeError(
+            "未找到可补丁的replyer类: "
+            f"group={group_names or '无'}, private={private_names or '无'}"
+        )
+
+    return group_class, private_class
+
+
 def _apply_monkey_patch() -> Tuple[bool, str]:
     global _PATCHED
 
@@ -380,14 +397,13 @@ def _apply_monkey_patch() -> Tuple[bool, str]:
         return True, "运行时补丁已存在，跳过重复应用"
 
     try:
-        from src.chat.replyer.group_generator import GroupGenerator
-        from src.chat.replyer.private_generator import PrivateGenerator
+        group_class, private_class = _resolve_replyer_classes()
 
-        _ORIGINAL_METHODS["group"] = GroupGenerator.llm_generate_content
-        _ORIGINAL_METHODS["private"] = PrivateGenerator.llm_generate_content
+        _ORIGINAL_METHODS["group"] = group_class.llm_generate_content
+        _ORIGINAL_METHODS["private"] = private_class.llm_generate_content
 
-        GroupGenerator.llm_generate_content = _make_patched_llm_generate_content("group")  # type: ignore[method-assign]
-        PrivateGenerator.llm_generate_content = _make_patched_llm_generate_content("private")  # type: ignore[method-assign]
+        group_class.llm_generate_content = _make_patched_llm_generate_content("group")  # type: ignore[method-assign]
+        private_class.llm_generate_content = _make_patched_llm_generate_content("private")  # type: ignore[method-assign]
 
         _PATCHED = True
         return True, "运行时补丁应用成功"
@@ -402,16 +418,15 @@ def _restore_monkey_patch() -> Tuple[bool, str]:
         return True, "运行时补丁未生效，无需恢复"
 
     try:
-        from src.chat.replyer.group_generator import GroupGenerator
-        from src.chat.replyer.private_generator import PrivateGenerator
+        group_class, private_class = _resolve_replyer_classes()
 
         group_original = _ORIGINAL_METHODS.get("group")
         private_original = _ORIGINAL_METHODS.get("private")
 
         if group_original:
-            GroupGenerator.llm_generate_content = group_original  # type: ignore[method-assign]
+            group_class.llm_generate_content = group_original  # type: ignore[method-assign]
         if private_original:
-            PrivateGenerator.llm_generate_content = private_original  # type: ignore[method-assign]
+            private_class.llm_generate_content = private_original  # type: ignore[method-assign]
 
         _ORIGINAL_METHODS.clear()
         _PATCHED = False
