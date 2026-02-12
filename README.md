@@ -47,7 +47,7 @@
 ### 6.1 启动监听脚本
 ```bash
 cd llm_message_guard_plugin
-python3 tools/mock_openai_server.py --host 127.0.0.1 --port 10030
+python3 mock_openai_server.py --host 127.0.0.1 --port 10030
 ```
 
 ### 6.2 在 MaiBot 配置里临时改 API 基地址
