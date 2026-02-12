@@ -32,7 +32,7 @@
 
 ## 4. 兼容与边界
 - 宿主版本支持范围写在 `_manifest.json` 的 `host_application` 字段。
-  - 当前配置：`min_version = 0.8.0`（未设置 `max_version`，表示默认允许更高版本）。
+  - 当前配置：`min_version = 0.12.0`（未设置 `max_version`，表示默认允许更高版本）。
   - 推荐写法：同时填写 `min_version` 与 `max_version`，避免宿主升级后接口变化导致行为不一致。
 - 该插件不修改宿主仓库文件，仅修改进程内方法引用。
 - 若 prompt 模板发生较大变化导致拆分失败，插件会按配置自动回退到原始单 prompt 调用。
