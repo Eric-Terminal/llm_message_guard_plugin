@@ -1,3 +1,4 @@
+import json
 import re
 import time
 from dataclasses import dataclass
@@ -345,12 +346,30 @@ def _make_patched_llm_generate_content(target_key: str):
                     return await original_method(self_obj, prompt)
                 raise RuntimeError("结构化消息构建失败，且已关闭回退")
 
+            cleaned_messages: List[Tuple[RoleType, str]] = []
+            debug_messages_payload: List[Dict[str, str]] = []
+            for role, text in structured_messages:
+                content = text.strip()
+                if not content:
+                    continue
+                cleaned_messages.append((role, content))
+                debug_messages_payload.append({"role": role.value, "content": content})
+
+            if not cleaned_messages:
+                if bool(_RUNTIME_CONFIG.get("fallback_to_original", True)):
+                    return await original_method(self_obj, prompt)
+                raise RuntimeError("结构化消息清洗后为空，且已关闭回退")
+
+            if _RUNTIME_CONFIG.get("verbose", False):
+                request_payload = {"messages": debug_messages_payload}
+                logger.info(
+                    "[LLM消息守卫] 结构化请求体(messages)如下:\n"
+                    + json.dumps(request_payload, ensure_ascii=False, indent=2)
+                )
+
             def message_factory(_client: BaseClient) -> List[Message]:
                 result: List[Message] = []
-                for role, text in structured_messages:
-                    content = text.strip()
-                    if not content:
-                        continue
+                for role, content in cleaned_messages:
                     result.append(MessageBuilder().set_role(role).add_text_content(content).build())
                 return result
 
@@ -360,7 +379,7 @@ def _make_patched_llm_generate_content(target_key: str):
 
             safe_content = (content or "").strip()
             _debug_log(
-                f"[LLM消息守卫] 结构化请求成功: mode={target_key}, model={model_name}, message_count={len(structured_messages)}"
+                f"[LLM消息守卫] 结构化请求成功: mode={target_key}, model={model_name}, message_count={len(cleaned_messages)}"
             )
             return safe_content, reasoning_content, model_name, tool_calls
 
