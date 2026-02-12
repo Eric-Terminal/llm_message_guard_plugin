@@ -1,0 +1,14 @@
+[plugin]
+config_version = "1.0.0"
+enabled = true
+
+[runtime]
+apply_group = true
+apply_private = true
+apply_rewrite = true
+merge_consecutive = true
+max_context_size_override = 0
+fallback_to_original = true
+
+[log]
+verbose = false
