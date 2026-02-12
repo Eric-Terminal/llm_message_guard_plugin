@@ -4,7 +4,7 @@
 这个插件用于缓解 replyer 链路中“整段 user prompt”带来的上下文注入风险。
 
 核心策略：
-- 启动时对 `GroupGenerator.llm_generate_content` 与 `PrivateGenerator.llm_generate_content` 做运行时 Monkey Patch。
+- 启动时对 replyer 的 `llm_generate_content` 做运行时 Monkey Patch（当前优先匹配 `DefaultReplyer/PrivateReplyer`，并兼容旧类名）。
 - 将原来的单段 `prompt` 请求改造成结构化 `messages`：
   - `system`：规则/知识/约束前缀
   - `user` / `assistant`：按真实账号身份映射的历史消息
@@ -31,6 +31,9 @@
 - `runtime.fallback_to_original`：失败是否回退
 
 ## 4. 兼容与边界
+- 宿主版本支持范围写在 `_manifest.json` 的 `host_application` 字段。
+  - 当前配置：`min_version = 0.8.0`（未设置 `max_version`，表示默认允许更高版本）。
+  - 推荐写法：同时填写 `min_version` 与 `max_version`，避免宿主升级后接口变化导致行为不一致。
 - 该插件不修改宿主仓库文件，仅修改进程内方法引用。
 - 若 prompt 模板发生较大变化导致拆分失败，插件会按配置自动回退到原始单 prompt 调用。
 - 需要宿主事件流触发 `ON_START` 后补丁才会生效。

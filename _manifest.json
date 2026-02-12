@@ -5,7 +5,7 @@
   "version": "1.0.0",
   "description": "通过运行时Monkey Patch将replyer单段prompt改为结构化messages，缓解上下文注入与伪造机器人发言混淆。",
   "author": {
-    "name": "Eric"
+    "name": "Eric-Terminal"
   },
   "license": "GPL-v3.0-or-later",
   "host_application": {
