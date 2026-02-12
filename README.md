@@ -1,7 +1,7 @@
-# LLM结构化消息守卫插件
+# LLM结构化消息守卫插件（试验性）
 
 ## 1. 功能说明
-这个插件用于缓解 replyer 链路中“整段 user prompt”带来的上下文注入风险。
+这个插件用于试验新的 LLM 消息发送方式，观察结构化 `messages` 发送在实际聊天中的效果是否更好，并缓解 replyer 链路中“整段 user prompt”带来的上下文注入风险。
 
 核心策略：
 - 启动时对 replyer 的 `llm_generate_content` 做运行时 Monkey Patch（当前优先匹配 `DefaultReplyer/PrivateReplyer`，并兼容旧类名）。
