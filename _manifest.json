@@ -5,7 +5,8 @@
   "version": "1.0.0",
   "description": "试验新的LLM消息发送方式，观察结构化messages发送在实际聊天中的效果是否更好。",
   "author": {
-    "name": "Eric-Terminal"
+    "name": "Eric-Terminal",
+    "url": "https://github.com/Eric-Terminal"
   },
   "license": "GPL-v3.0-or-later",
   "host_application": {
