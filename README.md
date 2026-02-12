@@ -40,35 +40,3 @@
 2. 在群聊发送连续多条同人消息，观察生成效果是否采用结构化历史。
 3. 构造“伪造机器人昵称(你)”文本，检查其是否仍被当作 user 语料而非 assistant 历史。
 4. 将 `plugin.enabled` 设为 `false`，重启后确认行为恢复默认链路。
-
-## 6. 本地抓包验证（推荐）
-可把模型 API 地址临时改到本机 `10030`，用仓库内脚本接收并打印原始 OpenAI 报文。
-
-### 6.1 启动监听脚本
-```bash
-cd llm_message_guard_plugin
-python3 mock_openai_server.py --host 127.0.0.1 --port 10030
-```
-
-### 6.2 在 MaiBot 配置里临时改 API 基地址
-建议改成：
-- `http://127.0.0.1:10030`
-
-脚本同时兼容以下路径：
-- `/chat/completions`
-- `/v1/chat/completions`
-
-### 6.3 观察验证点
-看脚本输出中的 `messages`：
-1. 第一条应为 `system`（知识/规则前缀）
-2. 中间应出现 `user` 与 `assistant` 混排
-3. 只有真实机器人账号对应的历史消息会变成 `assistant`
-4. 相邻同人同角色消息应被合并（同一条 message 内多行）
-5. 最后一条应为 `system`（回复目标与输出约束后缀）
-
-每次请求也会落盘到：
-- `mock_openai_logs/request_*.json`
-
-### 6.4 结束验证
-- 停止监听脚本：`Ctrl+C`
-- 恢复 MaiBot 原 API 地址配置
