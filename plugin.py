@@ -31,10 +31,16 @@ class PromptSplitResult:
 
 
 @dataclass
+class HistoryLine:
+    prefix: str
+    content: str
+
+
+@dataclass
 class MergedHistoryBlock:
     role: RoleType
     speaker_key: str
-    lines: List[str]
+    lines: List[HistoryLine]
 
 
 _PATCHED: bool = False
@@ -267,13 +273,13 @@ def _build_history_blocks(messages: List[Any], time_mode: str) -> List[MergedHis
         readable_time = translate_timestamp_to_human_readable(float(timestamp), mode=time_mode)
 
         speaker = _resolve_speaker_name(message)
-        one_line = f"{readable_time}, {speaker}: {content}"
+        history_line = HistoryLine(prefix=f"{readable_time}, {speaker}:", content=content)
         speaker_key = f"{platform}:{user_id}:{role.value}"
 
         if merge_consecutive and merged_blocks and merged_blocks[-1].speaker_key == speaker_key:
-            merged_blocks[-1].lines.append(one_line)
+            merged_blocks[-1].lines.append(history_line)
         else:
-            merged_blocks.append(MergedHistoryBlock(role=role, speaker_key=speaker_key, lines=[one_line]))
+            merged_blocks.append(MergedHistoryBlock(role=role, speaker_key=speaker_key, lines=[history_line]))
 
     return merged_blocks
 
@@ -312,7 +318,25 @@ def _build_structured_messages(self_obj: Any, prompt: str) -> Optional[List[Tupl
         messages.append((RoleType.System, split_result.system_prefix))
 
     for block in history_blocks:
-        messages.append((block.role, "\n".join(block.lines)))
+        if block.role == RoleType.Assistant:
+            assistant_prefix = [line.prefix for line in block.lines if line.prefix]
+            assistant_content = [line.content for line in block.lines if line.content]
+
+            if assistant_prefix:
+                messages.append((RoleType.User, "\n".join(assistant_prefix)))
+            if assistant_content:
+                messages.append((RoleType.Assistant, "\n".join(assistant_content)))
+            continue
+
+        history_lines: List[str] = []
+        for line in block.lines:
+            if line.content:
+                history_lines.append(f"{line.prefix} {line.content}")
+            else:
+                history_lines.append(line.prefix)
+
+        if history_lines:
+            messages.append((block.role, "\n".join(history_lines)))
 
     if split_result.system_suffix:
         messages.append((RoleType.System, split_result.system_suffix))
