@@ -2,7 +2,7 @@
   "manifest_version": 1,
   "id": "Eric.llm_message_guard_plugin",
   "name": "LLM结构化消息守卫插件(试验性)",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "试验新的LLM消息发送方式，观察结构化messages发送在实际聊天中的效果是否更好。",
   "author": {
     "name": "Eric-Terminal",
